@@ -27,11 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
-#include "CAN_C620_System.h"
-#include "CAN_C620.h"
-#include "CAN_Main.h"
-#include <stdio.h>
+#include "can_structs.h"
 
 /* USER CODE END Includes */
 
@@ -53,10 +49,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
-C620_DeviceInfo c620_dev_info_global[8];
-NUM_OF_DEVICES num_of_devices;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -205,7 +197,7 @@ int main(void)
 
 
 
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */

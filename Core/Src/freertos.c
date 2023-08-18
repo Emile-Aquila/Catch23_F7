@@ -36,14 +36,13 @@
 #include <std_msgs/msg/int32.h>
 #include <usart.h>
 
-#include "CAN_C620_System.h"
-#include "CAN_C620.h"
-#include "CAN_Main.h"
-#include <stdio.h>
+#include "can_structs.h"
+#include "can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticTimer_t osStaticTimerDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -68,7 +67,6 @@ void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
 /* USER CODE END Variables */
 /* Definitions for mrosTask */
 osThreadId_t mrosTaskHandle;
@@ -82,6 +80,26 @@ const osThreadAttr_t mrosTask_attributes = {
   .stack_size = sizeof(mrosTaskBuffer),
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for LEDTask */
+osThreadId_t LEDTaskHandle;
+uint32_t LEDTaskBuffer[ 512 ];
+osStaticThreadDef_t LEDTaskControlBlock;
+const osThreadAttr_t LEDTask_attributes = {
+  .name = "LEDTask",
+  .cb_mem = &LEDTaskControlBlock,
+  .cb_size = sizeof(LEDTaskControlBlock),
+  .stack_mem = &LEDTaskBuffer[0],
+  .stack_size = sizeof(LEDTaskBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for C620Timer */
+osTimerId_t C620TimerHandle;
+osStaticTimerDef_t C620TimerControlBlock;
+const osTimerAttr_t C620Timer_attributes = {
+  .name = "C620Timer",
+  .cb_mem = &C620TimerControlBlock,
+  .cb_size = sizeof(C620TimerControlBlock),
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -89,6 +107,8 @@ const osThreadAttr_t mrosTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartMrosTask(void *argument);
+void StartLEDTask(void *argument);
+void C620TimerCallback(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -111,8 +131,13 @@ void MX_FREERTOS_Init(void) {
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of C620Timer */
+  C620TimerHandle = osTimerNew(C620TimerCallback, osTimerPeriodic, NULL, &C620Timer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  osTimerStart(C620TimerHandle, 1);
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -122,6 +147,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of mrosTask */
   mrosTaskHandle = osThreadNew(StartMrosTask, NULL, &mrosTask_attributes);
+
+  /* creation of LEDTask */
+  LEDTaskHandle = osThreadNew(StartLEDTask, NULL, &LEDTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -201,6 +229,31 @@ void StartMrosTask(void *argument)
         osDelay(10);
     }
   /* USER CODE END StartMrosTask */
+}
+
+/* USER CODE BEGIN Header_StartLEDTask */
+/**
+* @brief Function implementing the LEDTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLEDTask */
+void StartLEDTask(void *argument)
+{
+  /* USER CODE BEGIN StartLEDTask */
+  for(;;){
+      // TODO: 実装
+      osDelay(1000);
+  }
+  /* USER CODE END StartLEDTask */
+}
+
+/* C620TimerCallback function */
+void C620TimerCallback(void *argument)
+{
+  /* USER CODE BEGIN C620TimerCallback */
+    C620_SendRequest(c620_dev_info_global, 1, 1000.0f, &hcan1);
+  /* USER CODE END C620TimerCallback */
 }
 
 /* Private application code --------------------------------------------------*/
