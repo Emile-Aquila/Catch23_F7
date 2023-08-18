@@ -53,6 +53,8 @@ set(MROS_UTILS_DIR "./micro_ros_stm32cubemx_utils")
 
 include_directories(
         ${MROS_UTILS_DIR}/microros_static_library/libmicroros/microros_include
+        CANLib/CAN_Main CANLib/Defines/Inc
+        CANLib_RoboMas/CAN_C620 CANLib_RoboMas/CAN_C620_Def CANLib_RoboMas/CAN_C620_System
         Core/Inc Drivers/STM32F7xx_HAL_Driver/Inc Drivers/STM32F7xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32F7xx/Include Drivers/CMSIS/Include USB_DEVICE/App USB_DEVICE/Target Middlewares/Third_Party/FreeRTOS/Source/include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1 Middlewares/ST/STM32_USB_Device_Library/Core/Inc Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
 )
 
@@ -63,6 +65,8 @@ file(GLOB_RECURSE SOURCES
         "${MROS_UTILS_DIR}/extra_sources/microros_allocators.c"
         "${MROS_UTILS_DIR}/extra_sources/microros_time.c"
         "${MROS_UTILS_DIR}/extra_sources/microros_transports/dma_transport.c"
+        "CANLib/CAN_Main/*.*" "CANLib/Defines/*.*"
+        "CANLib_RoboMas/*.*"
         "Core/*.*" "Middlewares/*.*" "Drivers/*.*" "USB_DEVICE/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F767ZITX_FLASH.ld)

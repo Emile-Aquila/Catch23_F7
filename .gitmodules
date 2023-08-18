@@ -1,0 +1,7 @@
+[submodule "CANLib"]
+	path = CANLib
+	url = https://gitlab.com/kikaiken/canlib.git
+	branch = fix_codes_for_RoboMas
+[submodule "CANLib_RoboMas"]
+	path = CANLib_RoboMas
+	url = https://gitlab.com/kikaiken/canlib_robomaster.git
