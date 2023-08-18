@@ -28,6 +28,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "CAN_C620_System.h"
+#include "CAN_C620.h"
+#include "CAN_Main.h"
+#include <stdio.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +54,9 @@
 
 /* USER CODE BEGIN PV */
 
+C620_DeviceInfo c620_dev_info_global[8];
+NUM_OF_DEVICES num_of_devices;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,6 +64,44 @@ void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
+
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxCompleteCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2CompleteCallbackCalled(hcan);
+}
+
+void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxAbortCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2AbortCallbackCalled(hcan);
+}
+
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxCompleteCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2CompleteCallbackCalled(hcan);
+}
+
+void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxAbortCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2AbortCallbackCalled(hcan);
+}
+
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxCompleteCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2CompleteCallbackCalled(hcan);
+}
+
+void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenTxMailboxAbortCallbackCalled(hcan);
+    CANLib_WhenTxMailbox0_1_2AbortCallbackCalled(hcan);
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+    WhenCANRxFifo0MsgPending(hcan, &num_of_devices);
+}
+
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan){
+    C620_WhenCANRxFifo1MsgPending(hcan);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -96,8 +142,70 @@ int main(void)
   MX_CAN2_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+    setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
 
-  /* USER CODE END 2 */
+    /*
+     * ===== CANLib Settings =====
+     * */
+    printf("Start Initializing CAN System:Begin\n\r");
+    CAN_SystemInit(&hcan2); // F7のCAN通信のinit
+
+    num_of_devices.mcmd3 = 1;
+    num_of_devices.mcmd4 = 0;
+    num_of_devices.air = 0;
+    num_of_devices.servo = 0;
+
+    printf("Start Initializing CAN System:End\n\r");
+    CAN_WaitConnect(&num_of_devices);
+
+    MCMD_HandleTypedef mcmd_struct;
+    mcmd_struct.device.node_type = NODE_MCMD3;
+    mcmd_struct.device.node_id = 1;
+    mcmd_struct.device.device_num = 0;
+    mcmd_struct.ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
+    mcmd_struct.ctrl_param.feedback = MCMD_FB_ENABLE;
+    mcmd_struct.fb_type = MCMD_FB_POS;
+    mcmd_struct.enc_dir = MCMD_DIR_FW;
+    mcmd_struct.rot_dir = MCMD_DIR_FW;
+    mcmd_struct.calib = CALIBRATION_DISABLE;
+
+    MCMD_init(&mcmd_struct);
+    MCMD_Calib(&mcmd_struct);  // キャリブレーションを行う
+    MCMD_SetTarget(&mcmd_struct, 0.1f);  // 目標値(0.0)を設定
+    MCMD_Control_Enable(&mcmd_struct);  // 制御開始
+
+
+
+    /*
+    * ===== CANLib_RoboMas Settings =====
+    * */
+    Init_C620_CAN_System(&hcan1);  // Init CAN System for C620
+    C620_Init(c620_dev_info_global, 8);
+
+    for(int i=0; i<1; i++) {
+        c620_dev_info_global[i].device_id = i+1;  // 1スタートな事に注意
+        c620_dev_info_global[i].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
+        c620_dev_info_global[i].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
+        c620_dev_info_global[i].ctrl_param.accel_limit_size = 3.0f;
+        c620_dev_info_global[i].ctrl_param.ctrl_type = C620_CTRL_VEL;
+        c620_dev_info_global[i].ctrl_param.pid.kp = 0.4f;
+        c620_dev_info_global[i].ctrl_param.pid.ki = 0.08f;
+        c620_dev_info_global[i].ctrl_param.pid.kd = 0.0f;
+        c620_dev_info_global[i].ctrl_param.pid.kff = 0.0f;
+    }
+    for(int i=0; i<1; i++){
+        C620_SetTarget(&c620_dev_info_global[i], 3.141592f * 1.0f);  // MAX: 20.0
+    }
+    C620_WaitForConnect(c620_dev_info_global, 1);
+    for(int i=0; i<1; i++){
+        C620_ControlEnable(&(c620_dev_info_global[i]));
+    }
+
+
+
+
+    /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */

@@ -35,6 +35,11 @@
 
 #include <std_msgs/msg/int32.h>
 #include <usart.h>
+
+#include "CAN_C620_System.h"
+#include "CAN_C620.h"
+#include "CAN_Main.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
