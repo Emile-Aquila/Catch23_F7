@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "can_structs.h"
+#include "can_utils.h"
 
 /* USER CODE END Includes */
 

@@ -36,7 +36,7 @@
 #include <std_msgs/msg/int32.h>
 #include <usart.h>
 
-#include "can_structs.h"
+#include "can_utils.h"
 #include "can.h"
 /* USER CODE END Includes */
 
@@ -241,10 +241,10 @@ void StartMrosTask(void *argument)
 void StartLEDTask(void *argument)
 {
   /* USER CODE BEGIN StartLEDTask */
-  for(;;){
-      // TODO: 実装
-      osDelay(1000);
-  }
+    while (1){
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);  // LD2 (Blue)
+        osDelay(2000);
+    }
   /* USER CODE END StartLEDTask */
 }
 
