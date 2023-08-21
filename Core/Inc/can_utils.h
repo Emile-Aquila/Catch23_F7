@@ -27,5 +27,8 @@ actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device);
 CAN_Device DeviceInfo_to_CAN_Device(actuator_msgs__msg__DeviceInfo* device_info);
 uint8_t MCMD_FB_TYPE_to_ActuatorMsg(MCMD_FB_TYPE fb_type);
 
+actuator_msgs__msg__DeviceInfo C620_Device_to_DeviceInfo(C620_DeviceInfo* c620_device_info);
+actuator_msgs__msg__ActuatorFeedback Get_C620_ActuatorFB(C620_DeviceInfo* c620_device_info, uint8_t act_fb_type);
 
-#endif //_CATCH23_F7_CAN_STRUCTS_H
+
+#endif //_CATCH23_F7_CAN_UTILS_H

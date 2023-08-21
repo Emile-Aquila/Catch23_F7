@@ -64,12 +64,11 @@ void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-rcl_publisher_t publisher;
+rcl_publisher_t publisher_mcmd;
+rcl_publisher_t publisher_c620;
 
 actuator_msgs__msg__ActuatorMsg actuator_msg;
 actuator_msgs__msg__ActuatorFeedback feedback_msg;
-
-float _mros_duty_pre;
 
 
 /* USER CODE END PM */
@@ -79,7 +78,7 @@ float _mros_duty_pre;
 /* USER CODE END Variables */
 /* Definitions for mrosTask */
 osThreadId_t mrosTaskHandle;
-uint32_t mrosTaskBuffer[ 3500 ];
+uint32_t mrosTaskBuffer[ 4000 ];
 osStaticThreadDef_t mrosTaskControlBlock;
 const osThreadAttr_t mrosTask_attributes = {
   .name = "mrosTask",
@@ -116,12 +115,36 @@ const osTimerAttr_t C620Timer_attributes = {
 #include <sys/time.h>
 
 
-void pub_timer_callback(rcl_timer_t * timer, int64_t last_call_time){
+void pub_timer_callback_mcmd(rcl_timer_t * timer, int64_t last_call_time){
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        RCSOFTCHECK(rcl_publish(&publisher, &feedback_msg, NULL));
+        if(num_of_devices.mcmd3 != 0 || num_of_devices.mcmd4 != 0){
+            uint8_t num_of_mcmd = num_of_devices.mcmd3 + num_of_devices.mcmd4;
+            for(uint8_t i = 0; i<num_of_mcmd; i++){
+                feedback_msg.device = CAN_Device_to_DeviceInfo(&mcmd_handlers[i].device);
+                feedback_msg.fb_type = MCMD_FB_TYPE_to_ActuatorMsg(mcmd_handlers[i].fb_type);
+                feedback_msg.fb_data = Get_MCMD_Feedback(&mcmd_handlers[i].device).value;
+                RCSOFTCHECK(rcl_publish(&publisher_mcmd, &feedback_msg, NULL));
+            }
+        }
     }
 }
+
+void pub_timer_callback_c620(rcl_timer_t * timer, int64_t last_call_time){
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        if(num_of_devices.mcmd3 != 0 || num_of_devices.mcmd4 != 0){
+            uint8_t num_of_mcmd = num_of_devices.mcmd3 + num_of_devices.mcmd4;
+            for(uint8_t i = 0; i<num_of_mcmd; i++){
+                feedback_msg.device = CAN_Device_to_DeviceInfo(&mcmd_handlers[i].device);
+                feedback_msg.fb_type = MCMD_FB_TYPE_to_ActuatorMsg(mcmd_handlers[i].fb_type);
+                feedback_msg.fb_data = Get_MCMD_Feedback(&mcmd_handlers[i].device).value;
+                RCSOFTCHECK(rcl_publish(&publisher_mcmd, &feedback_msg, NULL));
+            }
+        }
+    }
+}
+
 
 void subscription_callback(const void * msgin){
     const actuator_msgs__msg__ActuatorMsg * actuator_msg_pre = (const actuator_msgs__msg__ActuatorMsg * )msgin;
@@ -141,7 +164,6 @@ void subscription_callback(const void * msgin){
                 p_h_mcmd = &(mcmd_handlers[i]);
                 _mros_target_duty = clip_f((float)(actuator_msg.target_value), -0.2f, 0.2f);
                 MCMD_SetTarget(p_h_mcmd, _mros_target_duty);
-                _mros_duty_pre = _mros_target_duty;
                 break;
             }
         }
@@ -261,26 +283,37 @@ void StartMrosTask(void *argument)
 
 
     // create publisher
-    const char* topic_name_pub = "mros_output";
-    RCCHECK(rclc_publisher_init_default(&publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub));
+    const char* topic_name_pub_mcmd = "mros_output_mcmd";
+    RCCHECK(rclc_publisher_init_default(&publisher_mcmd, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_mcmd));
+
+    const char* topic_name_pub_c620 = "mros_output_c620";
+    RCCHECK(rclc_publisher_init_default(&publisher_c620, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_c620));
 
 
     // create timer (for publisher)
-    rcl_timer_t timer;
-    const unsigned int timer_timeout = 25;
-    RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout), pub_timer_callback));
-    RCCHECK(rclc_executor_add_timer(&executor, &timer));
+    rcl_timer_t timer_mcmd;
+    const unsigned int timer_timeout = 100;
+    RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(timer_timeout), pub_timer_callback_mcmd));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
+
+
+    // create timer (for publisher2)
+    rcl_timer_t timer_c620;
+    const unsigned int timer_timeout_c620 = 25;
+    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(timer_timeout_c620), pub_timer_callback_c620));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_c620));
+
 
     while(1){
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(200));
         osDelay(1000);
     }
 
     // free resources
     RCCHECK(rcl_subscription_fini(&subscriber, &node));
-    RCCHECK(rcl_publisher_fini(&publisher, &node))
+    RCCHECK(rcl_publisher_fini(&publisher_mcmd, &node))
     RCCHECK(rcl_node_fini(&node));
-    /* USER CODE END StartMrosTask */
+  /* USER CODE END StartMrosTask */
 }
 
 /* USER CODE BEGIN Header_StartLEDTask */
