@@ -42,7 +42,7 @@ popd > /dev/null
 ######## Trying to retrieve CFLAGS ########
 pushd /project > /dev/null
 #export RET_CFLAGS=$(make print_cflags)
-export RET_CFLAGS="-mcpu=cortex-m7 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard"
+export RET_CFLAGS="-mcpu=cortex-m7 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard -specs=nosys.specs -fdata-sections -ffunction-sections"
 RET_CODE=$?
 
 if [ $RET_CODE = "0" ]; then
