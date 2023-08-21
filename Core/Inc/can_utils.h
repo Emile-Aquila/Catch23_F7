@@ -22,6 +22,7 @@ extern MCMD_HandleTypedef mcmd_handlers[1];
 extern MCMD_Feedback_Typedef mcmd_fb[1];
 
 extern NUM_OF_DEVICES num_of_devices;
+extern const uint8_t num_of_c620;
 
 actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device);
 CAN_Device DeviceInfo_to_CAN_Device(actuator_msgs__msg__DeviceInfo* device_info);

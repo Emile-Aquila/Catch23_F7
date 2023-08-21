@@ -69,6 +69,7 @@ rcl_publisher_t publisher_c620;
 
 actuator_msgs__msg__ActuatorMsg actuator_msg;
 actuator_msgs__msg__ActuatorFeedback feedback_msg;
+actuator_msgs__msg__ActuatorFeedback feedback_msg_c620;
 
 
 /* USER CODE END PM */
@@ -112,8 +113,6 @@ const osTimerAttr_t C620Timer_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
-#include <sys/time.h>
-
 
 void pub_timer_callback_mcmd(rcl_timer_t * timer, int64_t last_call_time){
     RCLC_UNUSED(last_call_time);
@@ -133,13 +132,10 @@ void pub_timer_callback_mcmd(rcl_timer_t * timer, int64_t last_call_time){
 void pub_timer_callback_c620(rcl_timer_t * timer, int64_t last_call_time){
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        if(num_of_devices.mcmd3 != 0 || num_of_devices.mcmd4 != 0){
-            uint8_t num_of_mcmd = num_of_devices.mcmd3 + num_of_devices.mcmd4;
-            for(uint8_t i = 0; i<num_of_mcmd; i++){
-                feedback_msg.device = CAN_Device_to_DeviceInfo(&mcmd_handlers[i].device);
-                feedback_msg.fb_type = MCMD_FB_TYPE_to_ActuatorMsg(mcmd_handlers[i].fb_type);
-                feedback_msg.fb_data = Get_MCMD_Feedback(&mcmd_handlers[i].device).value;
-                RCSOFTCHECK(rcl_publish(&publisher_mcmd, &feedback_msg, NULL));
+        if(num_of_c620 > 0){
+            for(uint8_t i=0; i<num_of_c620; i++){
+                feedback_msg_c620 = Get_C620_ActuatorFB(&c620_dev_info_global[i], actuator_msgs__msg__ActuatorFeedback__FB_VEL);
+                RCSOFTCHECK(rcl_publish(&publisher_c620, &feedback_msg_c620, NULL));
             }
         }
     }
@@ -151,19 +147,28 @@ void subscription_callback(const void * msgin){
     actuator_msg.device = actuator_msg_pre->device;
     actuator_msg.target_value = actuator_msg_pre->target_value;
     actuator_msg.air_target = actuator_msg_pre->air_target;
-    float _mros_target_duty;
+    float _mros_target;
 
     CAN_Device device_info = DeviceInfo_to_CAN_Device(&(actuator_msg.device));
 
     if(device_info.node_type == NODE_MCMD4 || device_info.node_type == NODE_MCMD3){
-        int device_size = (device_info.node_type == NODE_MCMD3) ? num_of_devices.mcmd3 : num_of_devices.mcmd4;
+        uint8_t device_size = (device_info.node_type == NODE_MCMD3) ? num_of_devices.mcmd3 : num_of_devices.mcmd4;
         MCMD_HandleTypedef* p_h_mcmd;
-        for(int i=0; i < device_size; i++){
+        for(uint8_t i=0; i < device_size; i++){
             if((mcmd_handlers[i].device.device_num == device_info.device_num) &&
                (mcmd_handlers[i].device.node_id == device_info.node_id)){
                 p_h_mcmd = &(mcmd_handlers[i]);
-                _mros_target_duty = clip_f((float)(actuator_msg.target_value), -0.2f, 0.2f);
-                MCMD_SetTarget(p_h_mcmd, _mros_target_duty);
+                _mros_target = clip_f((float)(actuator_msg.target_value), -0.2f, 0.2f);
+                MCMD_SetTarget(p_h_mcmd, _mros_target);
+                break;
+            }
+        }
+    }else if(actuator_msg.device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
+        uint8_t device_size = num_of_c620;
+        for(uint8_t i=0; i<device_size; i++){
+            if(c620_dev_info_global[i].device_id == actuator_msg.device.device_num){
+                _mros_target = clip_f((float)(actuator_msg.target_value), -18.0f, 18.0f);
+                C620_SetTarget(&c620_dev_info_global[i], _mros_target);
                 break;
             }
         }
@@ -271,7 +276,7 @@ void StartMrosTask(void *argument)
 
     // create executor
     rclc_executor_t executor;
-    unsigned int num_handlers = 2;
+    unsigned int num_handlers = 3;
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
@@ -292,7 +297,7 @@ void StartMrosTask(void *argument)
 
     // create timer (for publisher)
     rcl_timer_t timer_mcmd;
-    const unsigned int timer_timeout = 100;
+    const unsigned int timer_timeout = 40;
     RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(timer_timeout), pub_timer_callback_mcmd));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
 
@@ -306,7 +311,6 @@ void StartMrosTask(void *argument)
 
     while(1){
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(200));
-        osDelay(1000);
     }
 
     // free resources

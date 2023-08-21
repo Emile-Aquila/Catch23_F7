@@ -151,21 +151,20 @@ int main(void)
     printf("Start Initializing CAN System:End\n\r");
     CAN_WaitConnect(&num_of_devices);
 
-    MCMD_HandleTypedef mcmd_struct;
-    mcmd_struct.device.node_type = NODE_MCMD3;
-    mcmd_struct.device.node_id = 1;
-    mcmd_struct.device.device_num = 0;
-    mcmd_struct.ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
-    mcmd_struct.ctrl_param.feedback = MCMD_FB_ENABLE;
-    mcmd_struct.fb_type = MCMD_FB_POS;
-    mcmd_struct.enc_dir = MCMD_DIR_FW;
-    mcmd_struct.rot_dir = MCMD_DIR_FW;
-    mcmd_struct.calib = CALIBRATION_DISABLE;
+    mcmd_handlers[0].device.node_type = NODE_MCMD3;
+    mcmd_handlers[0].device.node_id = 1;
+    mcmd_handlers[0].device.device_num = 0;
+    mcmd_handlers[0].ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
+    mcmd_handlers[0].ctrl_param.feedback = MCMD_FB_ENABLE;
+    mcmd_handlers[0].fb_type = MCMD_FB_DUTY;
+    mcmd_handlers[0].enc_dir = MCMD_DIR_FW;
+    mcmd_handlers[0].rot_dir = MCMD_DIR_FW;
+    mcmd_handlers[0].calib = CALIBRATION_DISABLE;
 
-    MCMD_init(&mcmd_struct);
-    MCMD_Calib(&mcmd_struct);  // キャリブレーションを行う
-    MCMD_SetTarget(&mcmd_struct, 0.1f);  // 目標値(0.0)を設定
-    MCMD_Control_Enable(&mcmd_struct);  // 制御開始
+    MCMD_init(&mcmd_handlers[0]);
+    MCMD_Calib(&mcmd_handlers[0]);  // キャリブレーションを行う
+    MCMD_SetTarget(&mcmd_handlers[0], 0.0f);  // 目標値(0.0)を設定
+    MCMD_Control_Enable(&mcmd_handlers[0]);  // 制御開始
 
 
 
@@ -173,21 +172,21 @@ int main(void)
     * ===== CANLib_RoboMas Settings =====
     * */
     Init_C620_CAN_System(&hcan1);  // Init CAN System for C620
-    C620_Init(c620_dev_info_global, 8);
+    C620_Init(c620_dev_info_global, num_of_c620);
 
-    for(int i=0; i<1; i++) {
+    for(int i=0; i<num_of_c620; i++) {
         c620_dev_info_global[i].device_id = i+1;  // 1スタートな事に注意
         c620_dev_info_global[i].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
         c620_dev_info_global[i].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
-        c620_dev_info_global[i].ctrl_param.accel_limit_size = 3.0f;
+        c620_dev_info_global[i].ctrl_param.accel_limit_size = 5.0f;
         c620_dev_info_global[i].ctrl_param.ctrl_type = C620_CTRL_VEL;
-        c620_dev_info_global[i].ctrl_param.pid.kp = 0.4f;
+        c620_dev_info_global[i].ctrl_param.pid.kp = 0.6f;
         c620_dev_info_global[i].ctrl_param.pid.ki = 0.08f;
         c620_dev_info_global[i].ctrl_param.pid.kd = 0.0f;
         c620_dev_info_global[i].ctrl_param.pid.kff = 0.0f;
     }
     for(int i=0; i<1; i++){
-        C620_SetTarget(&c620_dev_info_global[i], 3.141592f * 1.0f);  // MAX: 20.0
+        C620_SetTarget(&c620_dev_info_global[i], 0.0f);  // MAX: 20.0
     }
     C620_WaitForConnect(c620_dev_info_global, 1);
     for(int i=0; i<1; i++){

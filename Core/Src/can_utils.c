@@ -5,12 +5,13 @@
 #include <can_utils.h>
 
 
+NUM_OF_DEVICES num_of_devices;
 MCMD_HandleTypedef mcmd_handlers[1];
 MCMD_Feedback_Typedef mcmd_fb[1];
 
-
 C620_DeviceInfo c620_dev_info_global[8];
-NUM_OF_DEVICES num_of_devices;
+const uint8_t num_of_c620=1;
+
 
 actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device){
     actuator_msgs__msg__DeviceInfo device;
