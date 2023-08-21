@@ -33,8 +33,8 @@
 #include <rmw_microxrcedds_c/config.h>
 #include <rmw_microros/rmw_microros.h>
 #include <usart.h>
-//#include <unistd.h>
 
+#include "math_utils.h"
 #include "can_utils.h"
 #include "can.h"
 /* USER CODE END Includes */
@@ -70,7 +70,6 @@ actuator_msgs__msg__ActuatorMsg actuator_msg;
 actuator_msgs__msg__ActuatorFeedback feedback_msg;
 
 float _mros_duty_pre;
-float _mros_target_duty;
 
 
 /* USER CODE END PM */
@@ -129,25 +128,21 @@ void subscription_callback(const void * msgin){
     actuator_msg.device = actuator_msg_pre->device;
     actuator_msg.target_value = actuator_msg_pre->target_value;
     actuator_msg.air_target = actuator_msg_pre->air_target;
+    float _mros_target_duty;
 
     CAN_Device device_info = DeviceInfo_to_CAN_Device(&(actuator_msg.device));
-    if(_mros_duty_pre != (float)(actuator_msg.target_value)){
-        _mros_target_duty = (float)(actuator_msg.target_value);
-        if(_mros_target_duty > 0.2f){
-            _mros_target_duty = 0.2f;
-        }else if(_mros_target_duty < -0.2f){
-            _mros_target_duty = -0.2f;
-        }
-        if(device_info.node_type == NODE_MCMD4){
-            MCMD_HandleTypedef* p_h_mcmd;
-            for(int i=0; i<num_of_devices.mcmd4; i++){
-                if((mcmd_handlers[i].device.device_num == device_info.device_num) &&
-                   (mcmd_handlers[i].device.node_id == device_info.node_id)){
-                    p_h_mcmd = &(mcmd_handlers[i]);
-                    MCMD_SetTarget(p_h_mcmd, _mros_target_duty);
-                    _mros_duty_pre = _mros_target_duty;
-                    break;
-                }
+
+    if(device_info.node_type == NODE_MCMD4 || device_info.node_type == NODE_MCMD3){
+        int device_size = (device_info.node_type == NODE_MCMD3) ? num_of_devices.mcmd3 : num_of_devices.mcmd4;
+        MCMD_HandleTypedef* p_h_mcmd;
+        for(int i=0; i < device_size; i++){
+            if((mcmd_handlers[i].device.device_num == device_info.device_num) &&
+               (mcmd_handlers[i].device.node_id == device_info.node_id)){
+                p_h_mcmd = &(mcmd_handlers[i]);
+                _mros_target_duty = clip_f((float)(actuator_msg.target_value), -0.2f, 0.2f);
+                MCMD_SetTarget(p_h_mcmd, _mros_target_duty);
+                _mros_duty_pre = _mros_target_duty;
+                break;
             }
         }
     }
@@ -300,7 +295,7 @@ void StartLEDTask(void *argument)
   /* USER CODE BEGIN StartLEDTask */
     while (1){
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);  // LD2 (Blue)
-        osDelay(2000);
+        osDelay(200);
     }
   /* USER CODE END StartLEDTask */
 }
