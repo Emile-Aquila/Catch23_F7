@@ -6,8 +6,7 @@
 
 
 NUM_OF_DEVICES num_of_devices;
-MCMD_HandleTypedef mcmd_handlers[1];
-MCMD_Feedback_Typedef mcmd_fb[1];
+MCMD_HandleTypedef mcmd_handlers[NUM_OF_MCMD3+NUM_OF_MCMD4];
 
 C620_DeviceInfo c620_dev_info_global[8];
 const uint8_t num_of_c620=1;
