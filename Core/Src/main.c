@@ -28,6 +28,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can_utils.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -55,6 +56,17 @@
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(uint8_t ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+
+PUTCHAR_PROTOTYPE {
+    HAL_UART_Transmit(&huart2, &ch, 1, 500);
+    return ch;
+}
+
 
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan){
@@ -133,6 +145,7 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_USART3_UART_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
@@ -140,11 +153,12 @@ int main(void)
     /*
      * ===== CANLib Settings =====
      * */
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED)
     printf("Start Initializing CAN System:Begin\n\r");
     CAN_SystemInit(&hcan2); // F7のCAN通信のinit
 
-    num_of_devices.mcmd3 = 1;
-    num_of_devices.mcmd4 = 0;
+    num_of_devices.mcmd3 = NUM_OF_MCMD3;
+    num_of_devices.mcmd4 = NUM_OF_MCMD4;
     num_of_devices.air = 0;
     num_of_devices.servo = 0;
 
@@ -171,6 +185,7 @@ int main(void)
     /*
     * ===== CANLib_RoboMas Settings =====
     * */
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);  // LD2 (Blue)
     Init_C620_CAN_System(&hcan1);  // Init CAN System for C620
     C620_Init(c620_dev_info_global, num_of_c620);
 
@@ -194,8 +209,7 @@ int main(void)
     }
 
 
-
-
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED)
   /* USER CODE END 2 */
 
   /* Init scheduler */

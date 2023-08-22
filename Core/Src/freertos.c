@@ -262,7 +262,7 @@ void StartMrosTask(void *argument)
     if (!rcutils_set_default_allocator(&freeRTOS_allocator)) {
         printf("Error on default allocators (line %d)\n", __LINE__);
     }
-    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+    printf("start Micro-ROS Task\n");
 
     // micro-ROS app
     rclc_support_t support;
@@ -332,7 +332,7 @@ void StartLEDTask(void *argument)
   /* USER CODE BEGIN StartLEDTask */
     while (1){
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);  // LD2 (Blue)
-        osDelay(200);
+        osDelay(100);
     }
   /* USER CODE END StartLEDTask */
 }
