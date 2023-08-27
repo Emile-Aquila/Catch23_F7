@@ -32,6 +32,8 @@
 #include <uxr/client/transport.h>
 #include <rmw_microxrcedds_c/config.h>
 #include <rmw_microros/rmw_microros.h>
+#include <std_msgs/msg/float32.h>
+#include <std_msgs/msg/float32_multi_array.h>
 #include <usart.h>
 
 #include "math_utils.h"
@@ -66,6 +68,7 @@ void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 /* USER CODE BEGIN PM */
 rcl_publisher_t publisher_mcmd;
 rcl_publisher_t publisher_c620;
+rcl_publisher_t publisher_current, publisher_input, publisher_vel;
 
 actuator_msgs__msg__ActuatorMsg actuator_msg;
 actuator_msgs__msg__ActuatorFeedback feedback_msg;
@@ -79,7 +82,7 @@ actuator_msgs__msg__ActuatorFeedback feedback_msg_c620;
 /* USER CODE END Variables */
 /* Definitions for mrosTask */
 osThreadId_t mrosTaskHandle;
-uint32_t mrosTaskBuffer[ 4000 ];
+uint32_t mrosTaskBuffer[ 4500 ];
 osStaticThreadDef_t mrosTaskControlBlock;
 const osThreadAttr_t mrosTask_attributes = {
   .name = "mrosTask",
@@ -134,13 +137,45 @@ void pub_timer_callback_c620(rcl_timer_t * timer, int64_t last_call_time){
     if (timer != NULL) {
         if(num_of_c620 > 0){
             for(uint8_t i=0; i<num_of_c620; i++){
-                feedback_msg_c620 = Get_C620_ActuatorFB(&c620_dev_info_global[i], actuator_msgs__msg__ActuatorFeedback__FB_VEL);
+                if(c620_dev_info_global[i].ctrl_param.ctrl_type == C620_CTRL_POS) {
+                    feedback_msg_c620 = Get_C620_ActuatorFB(&c620_dev_info_global[i],
+                                                            actuator_msgs__msg__ActuatorFeedback__FB_POS);
+                }else if(c620_dev_info_global[i].ctrl_param.ctrl_type == C620_CTRL_VEL){
+                    feedback_msg_c620 = Get_C620_ActuatorFB(&c620_dev_info_global[i],
+                                                            actuator_msgs__msg__ActuatorFeedback__FB_VEL);
+                }
                 RCSOFTCHECK(rcl_publish(&publisher_c620, &feedback_msg_c620, NULL));
             }
         }
     }
 }
 
+void pub_debug_callback(rcl_timer_t * timer, int64_t last_call_time){
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        std_msgs__msg__Float32 val;
+        val.data = Get_C620_FeedbackData(&c620_dev_info_global[0]).current;
+        RCSOFTCHECK(rcl_publish(&publisher_current, &val, NULL));
+    }
+}
+
+void pub_debug_callback2(rcl_timer_t * timer, int64_t last_call_time){
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        std_msgs__msg__Float32 val;
+        val.data = c620_dev_info_global[0].ctrl_param._req_value;
+        RCSOFTCHECK(rcl_publish(&publisher_input, &val, NULL));
+    }
+}
+
+void pub_debug_callback3(rcl_timer_t * timer, int64_t last_call_time){
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        std_msgs__msg__Float32 val;
+        val.data = Get_C620_FeedbackData(&c620_dev_info_global[0]).velocity;
+        RCSOFTCHECK(rcl_publish(&publisher_vel, &val, NULL));
+    }
+}
 
 void subscription_callback(const void * msgin){
     const actuator_msgs__msg__ActuatorMsg * actuator_msg_pre = (const actuator_msgs__msg__ActuatorMsg * )msgin;
@@ -167,7 +202,7 @@ void subscription_callback(const void * msgin){
         uint8_t device_size = num_of_c620;
         for(uint8_t i=0; i<device_size; i++){
             if(c620_dev_info_global[i].device_id == actuator_msg.device.device_num){
-                _mros_target = clip_f((float)(actuator_msg.target_value), -18.0f, 18.0f);
+                _mros_target = clip_f((float)(actuator_msg.target_value), -10.0f, 10.0f);
                 C620_SetTarget(&c620_dev_info_global[i], _mros_target);
                 break;
             }
@@ -276,7 +311,7 @@ void StartMrosTask(void *argument)
 
     // create executor
     rclc_executor_t executor;
-    unsigned int num_handlers = 3;
+    unsigned int num_handlers = 6; // TODO : 忘れずに変更
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
@@ -289,24 +324,39 @@ void StartMrosTask(void *argument)
 
     // create publisher
     const char* topic_name_pub_mcmd = "mros_output_mcmd";
-    RCCHECK(rclc_publisher_init_default(&publisher_mcmd, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_mcmd));
+//    RCCHECK(rclc_publisher_init_default(&publisher_mcmd, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_mcmd));
 
     const char* topic_name_pub_c620 = "mros_output_c620";
     RCCHECK(rclc_publisher_init_default(&publisher_c620, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_c620));
 
+    RCCHECK(rclc_publisher_init_default(&publisher_current, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "current"));
+    RCCHECK(rclc_publisher_init_default(&publisher_input, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "input"));
+    RCCHECK(rclc_publisher_init_default(&publisher_vel, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "vel"));
+
 
     // create timer (for publisher)
     rcl_timer_t timer_mcmd;
-    const unsigned int timer_timeout = 40;
-    RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(timer_timeout), pub_timer_callback_mcmd));
-    RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
+//    RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(40), pub_timer_callback_mcmd));
+//    RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
 
 
     // create timer (for publisher2)
     rcl_timer_t timer_c620;
-    const unsigned int timer_timeout_c620 = 25;
-    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(timer_timeout_c620), pub_timer_callback_c620));
+    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620));
+
+    // create timer (for publisher3)
+    rcl_timer_t timer_debug;
+    RCCHECK(rclc_timer_init_default(&timer_debug, &support, RCL_MS_TO_NS(30), pub_debug_callback));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_debug));
+
+    rcl_timer_t timer_debug2;
+    RCCHECK(rclc_timer_init_default(&timer_debug2, &support, RCL_MS_TO_NS(30), pub_debug_callback2));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_debug2));
+
+    rcl_timer_t timer_debug3;
+    RCCHECK(rclc_timer_init_default(&timer_debug3, &support, RCL_MS_TO_NS(30), pub_debug_callback3));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_debug3));
 
 
     while(1){

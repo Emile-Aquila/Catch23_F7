@@ -164,6 +164,7 @@ int main(void)
 
     printf("Start Initializing CAN System:End\n\r");
     CAN_WaitConnect(&num_of_devices);
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);  // LD1 (GREEN)
 
     mcmd_handlers[0].device.node_type = NODE_MCMD3;
     mcmd_handlers[0].device.node_id = 1;
@@ -191,12 +192,19 @@ int main(void)
 
     for(int i=0; i<num_of_c620; i++) {
         c620_dev_info_global[i].device_id = i+1;  // 1スタートな事に注意
-        c620_dev_info_global[i].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
+        c620_dev_info_global[i].ctrl_param.accel_limit = C620_ACCEL_LIMIT_DISABLE;
         c620_dev_info_global[i].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
-        c620_dev_info_global[i].ctrl_param.accel_limit_size = 5.0f;
-        c620_dev_info_global[i].ctrl_param.ctrl_type = C620_CTRL_VEL;
-        c620_dev_info_global[i].ctrl_param.pid.kp = 0.6f;
-        c620_dev_info_global[i].ctrl_param.pid.ki = 0.08f;
+        c620_dev_info_global[i].ctrl_param.accel_limit_size = 25.0f;
+        c620_dev_info_global[i].ctrl_param.quant_per_rot = 1.0f/19.0f /(3.141592f*2.0f) *3.0f;  //M3508は19:1
+        c620_dev_info_global[i].ctrl_param.ctrl_type = C620_CTRL_POS;
+
+        c620_dev_info_global[i].ctrl_param.pid_vel.kp = 4.0f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
+        c620_dev_info_global[i].ctrl_param.pid_vel.ki = 0.0f;
+        c620_dev_info_global[i].ctrl_param.pid_vel.kd = 0.0f;
+        c620_dev_info_global[i].ctrl_param.pid_vel.kff = 0.0f;
+
+        c620_dev_info_global[i].ctrl_param.pid.kp = 6.0f;
+        c620_dev_info_global[i].ctrl_param.pid.ki = 0.5f;
         c620_dev_info_global[i].ctrl_param.pid.kd = 0.0f;
         c620_dev_info_global[i].ctrl_param.pid.kff = 0.0f;
     }
@@ -208,7 +216,7 @@ int main(void)
         C620_ControlEnable(&(c620_dev_info_global[i]));
     }
 
-
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);  // LD1 (GREEN)
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED)
   /* USER CODE END 2 */
 
