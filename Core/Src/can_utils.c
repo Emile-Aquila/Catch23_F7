@@ -99,19 +99,20 @@ actuator_msgs__msg__DeviceInfo C620_Device_to_DeviceInfo(C620_DeviceInfo* c620_d
 }
 
 
-actuator_msgs__msg__ActuatorFeedback Get_C620_ActuatorFB(C620_DeviceInfo* c620_device_info, uint8_t act_fb_type){
-    actuator_msgs__msg__ActuatorFeedback act_fb;
+actuator_msgs__msg__ActuatorMultipleFeedback Get_C620_ActuatorMultiFB(C620_DeviceInfo* c620_device_info, uint8_t act_fb_type){
+    actuator_msgs__msg__ActuatorMultipleFeedback act_fb;
     act_fb.device = C620_Device_to_DeviceInfo(c620_device_info);
     act_fb.fb_type = act_fb_type;
+    act_fb.input = c620_device_info->ctrl_param._req_value;
     switch (act_fb.fb_type) {
         case actuator_msgs__msg__ActuatorFeedback__FB_CURRENT:
-            act_fb.fb_data = Get_C620_FeedbackData(c620_device_info).current;
+            act_fb.output = Get_C620_FeedbackData(c620_device_info).current;
             break;
         case actuator_msgs__msg__ActuatorFeedback__FB_POS:
-            act_fb.fb_data = Get_C620_FeedbackData(c620_device_info).position;
+            act_fb.output = Get_C620_FeedbackData(c620_device_info).position;
             break;
         case actuator_msgs__msg__ActuatorFeedback__FB_VEL:
-            act_fb.fb_data = Get_C620_FeedbackData(c620_device_info).velocity;
+            act_fb.output = Get_C620_FeedbackData(c620_device_info).velocity;
             break;
         default:
             break;
