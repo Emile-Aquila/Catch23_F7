@@ -190,11 +190,21 @@ void subscription_callback(const void * msgin){
             }
         }
     }else if(actuator_msg.device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
-        uint8_t device_size = num_of_c620;
-        for(uint8_t i=0; i<device_size; i++){
+        for(uint8_t i=0; i<num_of_c620; i++){
             if(c620_dev_info_global[i].device_id == actuator_msg.device.device_num){
                 _mros_target = clip_f((float)(actuator_msg.target_value), -10.0f, 10.0f);
                 C620_SetTarget(&c620_dev_info_global[i], _mros_target);
+                break;
+            }
+        }
+    }else if(actuator_msg.device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_AIR){
+        for(uint8_t i=0; i<NUM_OF_AIR; i++){
+            if(air_devices[i].node_id == actuator_msg.device.node_id && air_devices[i].device_num == actuator_msg.device.device_num){
+                if(actuator_msg.air_target){
+                    AirCylinder_SendOutput(&(air_devices[i]), AIR_ON);
+                }else{
+                    AirCylinder_SendOutput(&(air_devices[i]), AIR_OFF);
+                }
                 break;
             }
         }

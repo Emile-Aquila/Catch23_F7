@@ -159,7 +159,7 @@ int main(void)
 
     num_of_devices.mcmd3 = NUM_OF_MCMD3;
     num_of_devices.mcmd4 = NUM_OF_MCMD4;
-    num_of_devices.air = 0;
+    num_of_devices.air = NUM_OF_AIR;
     num_of_devices.servo = 0;
 
     printf("Start Initializing CAN System:End\n\r");
@@ -167,20 +167,41 @@ int main(void)
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);  // LD1 (GREEN)
 
     // z
-    mcmd_handlers[0].device.node_type = NODE_MCMD3;
-    mcmd_handlers[0].device.node_id = 1;
-    mcmd_handlers[0].device.device_num = 0;
-    mcmd_handlers[0].ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
-    mcmd_handlers[0].ctrl_param.feedback = MCMD_FB_ENABLE;
-    mcmd_handlers[0].fb_type = MCMD_FB_DUTY;
-    mcmd_handlers[0].enc_dir = MCMD_DIR_FW;
-    mcmd_handlers[0].rot_dir = MCMD_DIR_FW;
-    mcmd_handlers[0].calib = CALIBRATION_DISABLE;
+    if(NUM_OF_MCMD3 != 0) {
+        mcmd_handlers[0].device.node_type = NODE_MCMD3;
+        mcmd_handlers[0].device.node_id = 1;
+        mcmd_handlers[0].device.device_num = 0;
+        mcmd_handlers[0].ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
+        mcmd_handlers[0].ctrl_param.feedback = MCMD_FB_ENABLE;
+        mcmd_handlers[0].fb_type = MCMD_FB_DUTY;
+        mcmd_handlers[0].enc_dir = MCMD_DIR_FW;
+        mcmd_handlers[0].rot_dir = MCMD_DIR_FW;
+        mcmd_handlers[0].calib = CALIBRATION_DISABLE;
 
-    MCMD_init(&mcmd_handlers[0]);
-    MCMD_Calib(&mcmd_handlers[0]);  // キャリブレーションを行う
-    MCMD_SetTarget(&mcmd_handlers[0], 0.0f);  // 目標値(0.0)を設定
-    MCMD_Control_Enable(&mcmd_handlers[0]);  // 制御開始
+        MCMD_init(&mcmd_handlers[0]);
+        MCMD_Calib(&mcmd_handlers[0]);  // キャリブレーションを行う
+        MCMD_SetTarget(&mcmd_handlers[0], 0.0f);  // 目標値(0.0)を設定
+        MCMD_Control_Enable(&mcmd_handlers[0]);  // 制御開始
+    }
+
+    // air cylinder
+    if(NUM_OF_AIR != 0) {
+        air_devices[0].node_type = NODE_AIR;
+        air_devices[0].node_id = 0;
+        air_devices[0].device_num = 0;
+
+        for (uint8_t j = 0; j < NUM_OF_AIR; j++) {
+            for (uint8_t i = 0; i < (uint8_t) PORT_8; i++) {
+                air_devices[j].device_num = i;
+                AirCylinder_Init(&air_devices[j], AIR_OFF);
+                HAL_Delay(20);
+            }
+        }
+
+        air_devices[0].device_num = 0;
+        AirCylinder_SendOutput(&air_devices[0], AIR_OFF);
+    }
+
 
 
 
