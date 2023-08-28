@@ -10,7 +10,7 @@ MCMD_HandleTypedef mcmd_handlers[NUM_OF_MCMD3+NUM_OF_MCMD4];
 CAN_Device air_devices[NUM_OF_AIR];
 
 C620_DeviceInfo c620_dev_info_global[8];
-const uint8_t num_of_c620=1;
+const uint8_t num_of_c620=2;
 
 
 actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device){

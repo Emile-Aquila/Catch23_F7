@@ -218,15 +218,15 @@ int main(void)
     c620_dev_info_global[0].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
     c620_dev_info_global[0].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
     c620_dev_info_global[0].ctrl_param.ctrl_type = C620_CTRL_POS;
-    c620_dev_info_global[0].ctrl_param.accel_limit_size = 25.0f;
-    c620_dev_info_global[0].ctrl_param.quant_per_rot = 1.0f/19.0f / 3.0f;  //M3508は19:1
+    c620_dev_info_global[0].ctrl_param.accel_limit_size = 3.0f;
+    c620_dev_info_global[0].ctrl_param.quant_per_rot = 1.0f/19.0f / 3.0f * 3.141592f * 2.0f;  //M3508は19:1
 
-    c620_dev_info_global[0].ctrl_param.pid_vel.kp = 4.0f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
+    c620_dev_info_global[0].ctrl_param.pid_vel.kp = 4.5f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
     c620_dev_info_global[0].ctrl_param.pid_vel.ki = 0.0f;
     c620_dev_info_global[0].ctrl_param.pid_vel.kd = 0.0f;
     c620_dev_info_global[0].ctrl_param.pid_vel.kff = 0.0f;
 
-    c620_dev_info_global[0].ctrl_param.pid.kp = 7.0f;  // 位置制御用
+    c620_dev_info_global[0].ctrl_param.pid.kp = 8.0f;  // 位置制御用
     c620_dev_info_global[0].ctrl_param.pid.ki = 1.0f;
     c620_dev_info_global[0].ctrl_param.pid.kd = 0.0f;
     c620_dev_info_global[0].ctrl_param.pid.kff = 0.0f;
@@ -237,16 +237,16 @@ int main(void)
     c620_dev_info_global[1].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
     c620_dev_info_global[1].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
     c620_dev_info_global[1].ctrl_param.ctrl_type = C620_CTRL_POS;
-    c620_dev_info_global[1].ctrl_param.accel_limit_size = 25.0f;
-    c620_dev_info_global[1].ctrl_param.quant_per_rot = 1.0f/19.0f /(3.141592f*2.0f) *3.0f;  //M3508は19:1 // TODO: 修正
+    c620_dev_info_global[1].ctrl_param.accel_limit_size = 1500.0f;
+    c620_dev_info_global[1].ctrl_param.quant_per_rot = 1.0f/19.0f * 300.0f;  //M3508は19:1 // TODO: 修正
 
-    c620_dev_info_global[1].ctrl_param.pid_vel.kp = 4.0f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
+    c620_dev_info_global[1].ctrl_param.pid_vel.kp = 0.1f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
     c620_dev_info_global[1].ctrl_param.pid_vel.ki = 0.0f;
     c620_dev_info_global[1].ctrl_param.pid_vel.kd = 0.0f;
     c620_dev_info_global[1].ctrl_param.pid_vel.kff = 0.0f;
 
-    c620_dev_info_global[1].ctrl_param.pid.kp = 7.0f;  // 位置制御用
-    c620_dev_info_global[1].ctrl_param.pid.ki = 1.0f;
+    c620_dev_info_global[1].ctrl_param.pid.kp = 5.0f;  // 位置制御用
+    c620_dev_info_global[1].ctrl_param.pid.ki = 0.8f;
     c620_dev_info_global[1].ctrl_param.pid.kd = 0.0f;
     c620_dev_info_global[1].ctrl_param.pid.kff = 0.0f;
 

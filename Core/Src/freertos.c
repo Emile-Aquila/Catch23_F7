@@ -36,6 +36,7 @@
 #include <rmw_microros/rmw_microros.h>
 #include <std_msgs/msg/float32.h>
 #include <std_msgs/msg/float32_multi_array.h>
+#include <actuator_msgs/msg/c620_feedback.h>
 #include <usart.h>
 
 #include "math_utils.h"
@@ -70,7 +71,7 @@ void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 /* USER CODE BEGIN PM */
 rcl_publisher_t publisher_mcmd;
 rcl_publisher_t publisher_c620;
-rcl_publisher_t publisher_c620_vels;
+rcl_publisher_t publisher_c620_r, publisher_c620_theta;
 
 actuator_msgs__msg__ActuatorMsg actuator_msg;
 actuator_msgs__msg__ActuatorFeedback feedback_msg;
@@ -138,7 +139,7 @@ void pub_timer_callback_c620(rcl_timer_t * timer, int64_t last_call_time){
     actuator_msgs__msg__ActuatorMultipleFeedback feedback_msg_c620;
     if (timer != NULL) {
         if(num_of_c620 > 0){
-            for(uint8_t i=0; i<num_of_c620; i++){
+            for(uint8_t i=1; i<num_of_c620; i++){
                 if(c620_dev_info_global[i].ctrl_param.ctrl_type == C620_CTRL_POS) {
                     feedback_msg_c620 = Get_C620_ActuatorMultiFB(&c620_dev_info_global[i],
                                                                  actuator_msgs__msg__ActuatorFeedback__FB_POS);
@@ -153,18 +154,45 @@ void pub_timer_callback_c620(rcl_timer_t * timer, int64_t last_call_time){
 }
 
 
-void pub_timer_callback_c620_vel(rcl_timer_t * timer, int64_t last_call_time){
+//void pub_timer_callback_c620_vel(rcl_timer_t * timer, int64_t last_call_time){
+//    RCLC_UNUSED(last_call_time);
+//    if (timer != NULL) {
+//        std_msgs__msg__Float32MultiArray vals;
+//        std_msgs__msg__Float32MultiArray__init(&vals);
+//        rosidl_runtime_c__float__Sequence__init(&(vals.data), 2);
+//        static float data[2];
+//        for(uint8_t i=0; i<(uint8_t)2; i++){
+//            data[i] = Get_C620_FeedbackData(&c620_dev_info_global[i]).velocity;
+//        }
+//        vals.data.data = data;
+//        RCSOFTCHECK(rcl_publish(&publisher_c620_vels, &vals, NULL));
+//    }
+//}
+
+
+void pub_timer_callback_c620_theta(rcl_timer_t * timer, int64_t last_call_time){
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) {
-        std_msgs__msg__Float32MultiArray vals;
-        std_msgs__msg__Float32MultiArray__init(&vals);
-        rosidl_runtime_c__float__Sequence__init(&(vals.data), 2);
-        static float data[2];
-        for(uint8_t i=0; i<(uint8_t)2; i++){
-            data[i] = Get_C620_FeedbackData(&c620_dev_info_global[i]).velocity;
-        }
-        vals.data.data = data;
-        RCSOFTCHECK(rcl_publish(&publisher_c620_vels, &vals, NULL));
+        actuator_msgs__msg__C620Feedback fb;
+        fb.device = C620_Device_to_DeviceInfo(&c620_dev_info_global[0]);
+        C620_FeedbackData fb_data = Get_C620_FeedbackData(&c620_dev_info_global[0]);
+        fb.velocity = fb_data.velocity;
+        fb.current = fb_data.current;
+        fb.position = fb_data.position;
+        RCSOFTCHECK(rcl_publish(&publisher_c620_theta, &fb, NULL));
+    }
+}
+
+void pub_timer_callback_c620_r(rcl_timer_t * timer, int64_t last_call_time){
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+        actuator_msgs__msg__C620Feedback fb;
+        fb.device = C620_Device_to_DeviceInfo(&c620_dev_info_global[1]);
+        C620_FeedbackData fb_data = Get_C620_FeedbackData(&c620_dev_info_global[1]);
+        fb.velocity = fb_data.velocity;
+        fb.current = fb_data.current;
+        fb.position = fb_data.position;
+        RCSOFTCHECK(rcl_publish(&publisher_c620_r, &fb, NULL));
     }
 }
 
@@ -184,7 +212,7 @@ void subscription_callback(const void * msgin){
             if((mcmd_handlers[i].device.device_num == device_info.device_num) &&
                (mcmd_handlers[i].device.node_id == device_info.node_id)){
                 p_h_mcmd = &(mcmd_handlers[i]);
-                _mros_target = clip_f((float)(actuator_msg.target_value), -0.2f, 0.2f);
+                _mros_target = (float)(actuator_msg.target_value);
                 MCMD_SetTarget(p_h_mcmd, _mros_target);
                 break;
             }
@@ -192,7 +220,7 @@ void subscription_callback(const void * msgin){
     }else if(actuator_msg.device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
         for(uint8_t i=0; i<num_of_c620; i++){
             if(c620_dev_info_global[i].device_id == actuator_msg.device.device_num){
-                _mros_target = clip_f((float)(actuator_msg.target_value), -10.0f, 10.0f);
+                _mros_target = (float)actuator_msg.target_value;
                 C620_SetTarget(&c620_dev_info_global[i], _mros_target);
                 break;
             }
@@ -312,14 +340,16 @@ void StartMrosTask(void *argument)
 
     // create executor
     rclc_executor_t executor;
-    unsigned int num_handlers = 4; // TODO : 忘れずに変更
+    unsigned int num_handlers = 5; // TODO : 忘れずに変更
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
     // create subscriber
     rcl_subscription_t subscriber;
     const char* topic_name_sub = "mros_input";
-    RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub));
+    rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
+    qos_profile.depth = 20;
+    RCCHECK(rclc_subscription_init(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub, &qos_profile));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &actuator_msg, &subscription_callback, ON_NEW_DATA));
 
 
@@ -334,14 +364,20 @@ void StartMrosTask(void *argument)
     const char* topic_name_pub_c620 = "mros_output_c620";
     RCCHECK(rclc_publisher_init_default(&publisher_c620, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMultipleFeedback), topic_name_pub_c620));
     rcl_timer_t timer_c620;
-    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620));
+    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(40), pub_timer_callback_c620));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620));
 
-    // publisher for c620 vels
-    RCCHECK(rclc_publisher_init_default(&publisher_c620_vels, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray), "c620_vels"));
-    rcl_timer_t timer_c620_vels;
-    RCCHECK(rclc_timer_init_default(&timer_c620_vels, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620_vel));
-    RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_vels));
+    // publisher for c620 r
+    RCCHECK(rclc_publisher_init_default(&publisher_c620_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, C620Feedback), "c620_r"));
+    rcl_timer_t timer_c620_r;
+    RCCHECK(rclc_timer_init_default(&timer_c620_r, &support, RCL_MS_TO_NS(30), pub_timer_callback_c620_r));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_r));
+
+    // publisher for c620 theta
+    RCCHECK(rclc_publisher_init_default(&publisher_c620_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, C620Feedback), "c620_theta"));
+    rcl_timer_t timer_c620_theta;
+    RCCHECK(rclc_timer_init_default(&timer_c620_theta, &support, RCL_MS_TO_NS(30), pub_timer_callback_c620_theta));
+    RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_theta));
 
 
 
@@ -377,7 +413,7 @@ void StartLEDTask(void *argument)
 void C620TimerCallback(void *argument)
 {
   /* USER CODE BEGIN C620TimerCallback */
-    C620_SendRequest(c620_dev_info_global, 1, 1000.0f, &hcan1);
+    C620_SendRequest(c620_dev_info_global, 2, 1000.0f, &hcan1);
   /* USER CODE END C620TimerCallback */
 }
 

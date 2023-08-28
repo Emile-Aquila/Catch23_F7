@@ -229,3 +229,4 @@ actuator_msgs/NodeType.msg
 actuator_msgs/ActuatorMsg.msg
 actuator_msgs/DeviceInfo.msg
 actuator_msgs/ActuatorMultipleFeedback.msg
+actuator_msgs/C620Feedback.msg

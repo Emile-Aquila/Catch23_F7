@@ -10,7 +10,7 @@ https://github.com/micro-ROS/micro_ros_utilities 8b19600bf08fb483bb1e6ea1d95fc9d
 https://github.com/micro-ROS/rcutils 91e657ebe7381f550d463bf7d18851ffe7f28b9c
 https://github.com/micro-ROS/rmw-microxrcedds.git 3144202d117b146a925b059dfb9ba43e6bf15f25
 https://github.com/ros2/rclc 7af20545ec3c11b2dcf1f99fc3705f10c45b6e2b
-https://gitlab.com/kikaiken/actuator_msgs a099cd5ef9fa805834d6322fc1b5cbf402a89f47
+https://gitlab.com/kikaiken/actuator_msgs f89daf89bf93a3d4dc75132e3a4b61440b1c79fd
 https://github.com/ros2/rcl_interfaces.git 5e01a28f9866a564491480e12d8659a134678741
 https://github.com/ros2/rcl.git cc9ea2810ff7c181ccdd43dc1f5c336f531fa8d8
 https://github.com/ros2/unique_identifier_msgs.git 27767cefcf8a80da44641dc208c57722c28aa11c
