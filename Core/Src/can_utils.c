@@ -13,7 +13,7 @@ C620_DeviceInfo c620_dev_info_global[8];
 const uint8_t num_of_c620=2;
 
 
-actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device){
+actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(const CAN_Device* can_device){
     actuator_msgs__msg__DeviceInfo device;
     device.node_id = can_device->node_id;
     device.device_num = can_device->device_num;
@@ -42,7 +42,7 @@ actuator_msgs__msg__DeviceInfo CAN_Device_to_DeviceInfo(CAN_Device* can_device){
     return device;
 }
 
-CAN_Device DeviceInfo_to_CAN_Device(actuator_msgs__msg__DeviceInfo* device_info){
+CAN_Device DeviceInfo_to_CAN_Device(const actuator_msgs__msg__DeviceInfo* device_info){
     CAN_Device can_device;
     can_device.node_id = device_info->node_id;
     can_device.device_num = device_info->device_num;

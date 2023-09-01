@@ -166,21 +166,29 @@ int main(void)
     CAN_WaitConnect(&num_of_devices);
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);  // LD1 (GREEN)
 
-    // z
+    // mcmd[0] -> z
     if(NUM_OF_MCMD3 != 0) {
         mcmd_handlers[0].device.node_type = NODE_MCMD3;
         mcmd_handlers[0].device.node_id = 1;
         mcmd_handlers[0].device.device_num = 0;
-        mcmd_handlers[0].ctrl_param.ctrl_type = MCMD_CTRL_DUTY;
+        mcmd_handlers[0].ctrl_param.ctrl_type = MCMD_CTRL_POS;
         mcmd_handlers[0].ctrl_param.feedback = MCMD_FB_ENABLE;
-        mcmd_handlers[0].fb_type = MCMD_FB_DUTY;
-        mcmd_handlers[0].enc_dir = MCMD_DIR_FW;
-        mcmd_handlers[0].rot_dir = MCMD_DIR_FW;
-        mcmd_handlers[0].calib = CALIBRATION_DISABLE;
+        mcmd_handlers[0].fb_type = MCMD_FB_POS;
+        mcmd_handlers[0].enc_dir = MCMD_DIR_FW;  // TODO: ?
+        mcmd_handlers[0].rot_dir = MCMD_DIR_FW;  // TODO: ?
+        mcmd_handlers[0].calib = CALIBRATION_ENABLE;
+        mcmd_handlers[0].ctrl_param.gravity_compensation = GRAVITY_COMPENSATION_DISABLE;
+        mcmd_handlers[0].calib_duty = -0.1f;
+        mcmd_handlers[0].quant_per_unit = 90.0f / 1024.0f;  // TODO: 分解能が不明
+        mcmd_handlers[0].ctrl_param.accel_limit = ACCEL_LIMIT_ENABLE;
+        mcmd_handlers[0].ctrl_param.accel_limit_size = 10.0f;
+        mcmd_handlers[0].ctrl_param.PID_param.kp = 0.1f;
 
         MCMD_init(&mcmd_handlers[0]);
         MCMD_Calib(&mcmd_handlers[0]);  // キャリブレーションを行う
+        HAL_Delay(1000);
         MCMD_SetTarget(&mcmd_handlers[0], 0.0f);  // 目標値(0.0)を設定
+        // TODO: 稼働限界は226mm
         MCMD_Control_Enable(&mcmd_handlers[0]);  // 制御開始
     }
 
@@ -218,7 +226,7 @@ int main(void)
     c620_dev_info_global[0].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
     c620_dev_info_global[0].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
     c620_dev_info_global[0].ctrl_param.ctrl_type = C620_CTRL_POS;
-    c620_dev_info_global[0].ctrl_param.accel_limit_size = 3.0f;
+    c620_dev_info_global[0].ctrl_param.accel_limit_size = 15.0f;
     c620_dev_info_global[0].ctrl_param.quant_per_rot = 1.0f/19.0f / 3.0f * 3.141592f * 2.0f;  //M3508は19:1
 
     c620_dev_info_global[0].ctrl_param.pid_vel.kp = 4.5f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
