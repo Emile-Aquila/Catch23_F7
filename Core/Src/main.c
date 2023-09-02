@@ -212,7 +212,6 @@ int main(void)
 
 
 
-
     /*
     * ===== CANLib_RoboMas Settings =====
     * */
@@ -228,6 +227,7 @@ int main(void)
     c620_dev_info_global[0].ctrl_param.ctrl_type = C620_CTRL_POS;
     c620_dev_info_global[0].ctrl_param.accel_limit_size = 15.0f;
     c620_dev_info_global[0].ctrl_param.quant_per_rot = 1.0f/19.0f / 3.0f * 3.141592f * 2.0f;  //M3508は19:1
+    c620_dev_info_global[0].ctrl_param.rotation = C620_ROT_ACW;
 
     c620_dev_info_global[0].ctrl_param.pid_vel.kp = 4.5f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
     c620_dev_info_global[0].ctrl_param.pid_vel.ki = 0.0f;
@@ -247,6 +247,7 @@ int main(void)
     c620_dev_info_global[1].ctrl_param.ctrl_type = C620_CTRL_POS;
     c620_dev_info_global[1].ctrl_param.accel_limit_size = 1500.0f;
     c620_dev_info_global[1].ctrl_param.quant_per_rot = 1.0f/19.0f * 300.0f;  //M3508は19:1 // TODO: 修正
+    c620_dev_info_global[1].ctrl_param.rotation = C620_ROT_CW;
 
     c620_dev_info_global[1].ctrl_param.pid_vel.kp = 0.1f;  // 位置制御の場合はpid_velに速度制御用のgainを設定する
     c620_dev_info_global[1].ctrl_param.pid_vel.ki = 0.0f;

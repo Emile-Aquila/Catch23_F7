@@ -363,6 +363,20 @@ void StartMrosTask(void *argument)
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
+    // create subscriber for r
+    rcl_subscription_t subscriber_r;
+    const char* sub_name_r = "mros_input_r";
+    actuator_msgs__msg__ActuatorMsg actuator_msg_r;
+    RCCHECK(rclc_subscription_init_default(&subscriber_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_r));
+    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_r, &actuator_msg_r, &subscription_callback_r, ON_NEW_DATA));
+
+    // create subscriber for theta
+    rcl_subscription_t subscriber_theta;
+    const char* sub_name_theta = "mros_input_theta";
+    actuator_msgs__msg__ActuatorMsg actuator_msg_theta;
+    RCCHECK(rclc_subscription_init_default(&subscriber_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_theta));
+    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_theta, &actuator_msg_theta, &subscription_callback_theta, ON_NEW_DATA));
+
     // create subscriber for can modules
     rcl_subscription_t subscriber;
     const char* topic_name_sub = "mros_input";
@@ -371,20 +385,6 @@ void StartMrosTask(void *argument)
     actuator_msgs__msg__ActuatorMsg actuator_msg;
     RCCHECK(rclc_subscription_init(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub, &qos_profile));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &actuator_msg, &subscription_callback, ON_NEW_DATA));
-
-    // create subscriber for r
-    rcl_subscription_t subscriber_r;
-    const char* sub_name_r = "mros_input_r";
-    actuator_msgs__msg__ActuatorMsg actuator_msg_r;
-    RCCHECK(rclc_subscription_init_best_effort(&subscriber_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_r));
-    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_r, &actuator_msg_r, &subscription_callback_r, ON_NEW_DATA));
-
-    // create subscriber for theta
-    rcl_subscription_t subscriber_theta;
-    const char* sub_name_theta = "mros_input_theta";
-    actuator_msgs__msg__ActuatorMsg actuator_msg_theta;
-    RCCHECK(rclc_subscription_init_best_effort(&subscriber_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_theta));
-    RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_theta, &actuator_msg_theta, &subscription_callback_theta, ON_NEW_DATA));
 
 
     // publisher for mcmd
