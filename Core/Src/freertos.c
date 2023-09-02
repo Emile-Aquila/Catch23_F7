@@ -70,10 +70,7 @@ void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element,
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 rcl_publisher_t publisher_mcmd;
-//rcl_publisher_t publisher_c620;
 rcl_publisher_t publisher_c620_r, publisher_c620_theta;
-
-actuator_msgs__msg__ActuatorFeedback feedback_msg;
 
 
 /* USER CODE END PM */
@@ -120,6 +117,8 @@ const osTimerAttr_t C620Timer_attributes = {
 
 void pub_timer_callback_mcmd(rcl_timer_t * timer, int64_t last_call_time){
     RCLC_UNUSED(last_call_time);
+    actuator_msgs__msg__ActuatorFeedback feedback_msg;
+
     if (timer != NULL) {
         if(num_of_devices.mcmd3 != 0 || num_of_devices.mcmd4 != 0){
             uint8_t num_of_mcmd = num_of_devices.mcmd3 + num_of_devices.mcmd4;
@@ -364,11 +363,11 @@ void StartMrosTask(void *argument)
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
-    // create subscriber
+    // create subscriber for can modules
     rcl_subscription_t subscriber;
     const char* topic_name_sub = "mros_input";
     rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
-    qos_profile.depth = 20;
+    qos_profile.depth = 2;
     actuator_msgs__msg__ActuatorMsg actuator_msg;
     RCCHECK(rclc_subscription_init(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub, &qos_profile));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &actuator_msg, &subscription_callback, ON_NEW_DATA));
@@ -386,7 +385,6 @@ void StartMrosTask(void *argument)
     actuator_msgs__msg__ActuatorMsg actuator_msg_theta;
     RCCHECK(rclc_subscription_init_best_effort(&subscriber_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_theta));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_theta, &actuator_msg_theta, &subscription_callback_theta, ON_NEW_DATA));
-
 
 
     // publisher for mcmd
@@ -416,18 +414,20 @@ void StartMrosTask(void *argument)
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_theta));
 
 
+    rclc_executor_spin(&executor);
 
-    while(1){
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(200));
-    }
 
     // free resources
+    RCCHECK(rclc_executor_fini(&executor));
     RCCHECK(rcl_subscription_fini(&subscriber, &node));
     RCCHECK(rcl_subscription_fini(&subscriber_r, &node));
     RCCHECK(rcl_subscription_fini(&subscriber_theta, &node));
-    RCCHECK(rcl_publisher_fini(&publisher_mcmd, &node))
+//    RCCHECK(rcl_publisher_fini(&publisher_mcmd, &node))
     RCCHECK(rcl_publisher_fini(&publisher_c620_theta, &node))
     RCCHECK(rcl_publisher_fini(&publisher_c620_r, &node))
+    RCCHECK(rcl_timer_fini(&timer_c620_r));
+    RCCHECK(rcl_timer_fini(&timer_c620_theta));
+    RCCHECK(rcl_timer_fini(&timer_mcmd));
     RCCHECK(rcl_node_fini(&node));
   /* USER CODE END StartMrosTask */
 }
