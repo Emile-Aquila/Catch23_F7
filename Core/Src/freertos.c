@@ -242,6 +242,7 @@ void subscription_callback_r(const void * msgin) {
     if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
         if(p_actuator_msg->device.device_num != 2)return;
         _mros_target = (float)p_actuator_msg->target_value;
+//        _mros_target = 0.0f;
         C620_SetTarget(&c620_dev_info_global[1], _mros_target);
     }
 }
@@ -253,6 +254,7 @@ void subscription_callback_theta(const void * msgin) {
     if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
         if(p_actuator_msg->device.device_num != 1)return;
         _mros_target = (float)p_actuator_msg->target_value;
+//        _mros_target = 0.0f;
         C620_SetTarget(&c620_dev_info_global[0], _mros_target);
     }
 }
