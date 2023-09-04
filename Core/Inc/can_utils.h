@@ -17,7 +17,7 @@
 #include <actuator_msgs/msg/actuator_multiple_feedback.h>
 #include <actuator_msgs/msg/node_type.h>
 
-#define NUM_OF_MCMD3 0
+#define NUM_OF_MCMD3 1
 #define NUM_OF_MCMD4 0
 #define NUM_OF_AIR 0
 
