@@ -1,8 +1,8 @@
 
 https://github.com/eProsima/Micro-CDR.git ed4fd513a24a53b93d548d342cb7aa0a18716f04
 https://github.com/eProsima/Micro-XRCE-DDS-Client.git b8dbfaa775d0d842edfa9a0eb2ebc8ebdb1a0c14
-https://github.com/micro-ROS/rcl 20eea6d1176a6de118e4b8197951af6b286ad5c6
-https://github.com/micro-ROS/micro_ros_msgs.git 3e7eb50f5b75ae9c1234326e29bb56c9bd685b84
+https://github.com/micro-ROS/rcl 1fa8910404efcd12cdeb490d40aa2a5802a79317
+https://github.com/micro-ROS/micro_ros_msgs.git 69855ee965473d449244b8057728812be229f6aa
 https://github.com/micro-ROS/rosidl_typesupport.git 20f4849939c60d46f6e39b3720bb581e111bd166
 https://github.com/micro-ROS/rosidl_typesupport_microxrcedds.git 7e0331f2ea7329fb05e496a614e7e1f912f6d839
 https://gitlab.com/micro-ROS/ros_tracing/ros2_tracing.git/ 548634dd2837d65c043436c8186614e924be5c6c
@@ -12,7 +12,7 @@ https://github.com/micro-ROS/rmw-microxrcedds.git 3144202d117b146a925b059dfb9ba4
 https://github.com/ros2/rclc 7af20545ec3c11b2dcf1f99fc3705f10c45b6e2b
 https://gitlab.com/kikaiken/actuator_msgs dfef450abbaf1047403b952f76d164993dfc1d1d
 https://github.com/ros2/rcl_interfaces.git 5e01a28f9866a564491480e12d8659a134678741
-https://github.com/ros2/rcl.git cc9ea2810ff7c181ccdd43dc1f5c336f531fa8d8
+https://github.com/ros2/rcl.git 887e69602e694c4a68bbe4aab89f7978cd6effdb
 https://github.com/ros2/unique_identifier_msgs.git 27767cefcf8a80da44641dc208c57722c28aa11c
 https://github.com/ros2/test_interface_files.git a0c8f5e338490ddf8b98238dce35c06810115e8b
 https://github.com/ros2/rcpputils.git 3eb281afdc891855b5feb367c79ede1e2fbb0acb

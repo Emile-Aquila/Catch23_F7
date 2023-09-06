@@ -191,6 +191,7 @@ void pub_timer_callback_c620_r(rcl_timer_t * timer, int64_t last_call_time){
         fb.velocity = fb_data.velocity;
         fb.current = fb_data.current;
         fb.position = fb_data.position + 325.0f;
+        fb.position = fb_data.position;
         fb.target_value = c620_dev_info_global[1].ctrl_param._target_value + 325.0f;
         RCSOFTCHECK(rcl_publish(&publisher_c620_r, &fb, NULL));
     }
@@ -223,8 +224,8 @@ void subscription_callback(const void * msgin){
         }
     }else if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_AIR){
         for(uint8_t i=0; i<NUM_OF_AIR; i++){
-            if(air_devices[i].node_id == p_actuator_msg->device.node_id && air_devices[i].device_num == p_actuator_msg->device.device_num){
-                if(p_actuator_msg->air_target){
+            if((air_devices[i].node_id == p_actuator_msg->device.node_id) && (air_devices[i].device_num == p_actuator_msg->device.device_num)){
+                if((uint8_t)(p_actuator_msg->air_target) == 1){
                     AirCylinder_SendOutput(&(air_devices[i]), AIR_ON);
                 }else{
                     AirCylinder_SendOutput(&(air_devices[i]), AIR_OFF);
@@ -242,7 +243,7 @@ void subscription_callback_r(const void * msgin) {
     if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
         if(p_actuator_msg->device.device_num != 2)return;
         _mros_target = (float)p_actuator_msg->target_value - 325.0f;
-        _mros_target = clip_f(_mros_target, 0.0f, 650.0f);
+        _mros_target = clip_f(_mros_target, 0.0f, 650.0f);  // TODO
 //        _mros_target = 0.0f;
         C620_SetTarget(&c620_dev_info_global[1], _mros_target);
     }
@@ -339,6 +340,17 @@ void StartMrosTask(void *argument)
             cubemx_transport_write,
             cubemx_transport_read);
 
+    // TODO: micro-ROS connection check
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED) -> ON
+    while(1) {
+        rmw_ret_t ping_result = rmw_uros_ping_agent(1000, 5);  // ping Agent
+        if(ping_result == RMW_RET_OK){
+            break;
+        }
+    }
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED) -> OFF
+
+
     rcl_allocator_t freeRTOS_allocator = rcutils_get_zero_initialized_allocator();
     freeRTOS_allocator.allocate = microros_allocate;
     freeRTOS_allocator.deallocate = microros_deallocate;
@@ -383,10 +395,8 @@ void StartMrosTask(void *argument)
     // create subscriber for can modules
     rcl_subscription_t subscriber;
     const char* topic_name_sub = "mros_input";
-    rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
-    qos_profile.depth = 2;
     actuator_msgs__msg__ActuatorMsg actuator_msg;
-    RCCHECK(rclc_subscription_init(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub, &qos_profile));
+    RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), topic_name_sub));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &actuator_msg, &subscription_callback, ON_NEW_DATA));
 
 

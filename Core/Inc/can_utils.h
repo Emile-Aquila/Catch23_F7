@@ -19,7 +19,7 @@
 
 #define NUM_OF_MCMD3 1
 #define NUM_OF_MCMD4 0
-#define NUM_OF_AIR 0
+#define NUM_OF_AIR 3
 
 extern C620_DeviceInfo c620_dev_info_global[8];
 extern MCMD_HandleTypedef mcmd_handlers[NUM_OF_MCMD3+NUM_OF_MCMD4];

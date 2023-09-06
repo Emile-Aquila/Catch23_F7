@@ -35,14 +35,16 @@
                 "-DUCLIENT_PROFILE_DISCOVERY=OFF",
                 "-DUCLIENT_PROFILE_SERIAL=OFF",
                 "-UCLIENT_PROFILE_STREAM_FRAMING=ON",
-                "-DUCLIENT_PROFILE_CUSTOM_TRANSPORT=ON"
+                "-DUCLIENT_PROFILE_CUSTOM_TRANSPORT=ON",
+                    "-DUCLIENT_HARD_LIVELINESS_CHECK=ON",
+                    "-DUCLIENT_HARD_LIVELINESS_CHECK_TIMEOUT=1000"
             ]
         },
         "rmw_microxrcedds": {
             "cmake-args": [
                 "-DRMW_UXRCE_MAX_NODES=1",
                 "-DRMW_UXRCE_MAX_PUBLISHERS=10",
-                "-DRMW_UXRCE_MAX_SUBSCRIPTIONS=5",
+                "-DRMW_UXRCE_MAX_SUBSCRIPTIONS=7",
                 "-DRMW_UXRCE_MAX_SERVICES=1",
                 "-DRMW_UXRCE_MAX_CLIENTS=1",
                 "-DRMW_UXRCE_MAX_HISTORY=10",
