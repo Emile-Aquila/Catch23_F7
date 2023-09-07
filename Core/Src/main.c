@@ -213,7 +213,6 @@ int main(void)
             for (uint8_t i = 0; i <= (uint8_t) PORT_8; i++) {
                 air_devices[j].device_num = i;
                 AirCylinder_Init(&air_devices[j], AIR_OFF);
-                HAL_Delay(20);
             }
         }
         air_devices[0].device_num = PORT_1;

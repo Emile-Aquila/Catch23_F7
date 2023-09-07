@@ -200,7 +200,7 @@ void pub_timer_callback_c620_r(rcl_timer_t * timer, int64_t last_call_time){
 void subscription_callback(const void * msgin){
     const actuator_msgs__msg__ActuatorMsg * p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg * )msgin;
     CAN_Device device_info = DeviceInfo_to_CAN_Device(&(p_actuator_msg->device));
-    float _mros_target;
+    static float _mros_target;
 
     if(device_info.node_type == NODE_MCMD4 || device_info.node_type == NODE_MCMD3){
         uint8_t device_size = (device_info.node_type == NODE_MCMD3) ? num_of_devices.mcmd3 : num_of_devices.mcmd4;
@@ -237,28 +237,39 @@ void subscription_callback(const void * msgin){
 }
 
 void subscription_callback_r(const void * msgin) {
-    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
-    float _mros_target;
+    const std_msgs__msg__Float32 *p_target_value = (const std_msgs__msg__Float32 *)msgin;
+    static float _mros_target;
+    _mros_target = p_target_value->data - 325.0f;
+//    _mros_target = clip_f(_mros_target, 0.0f, 650.0f);
+    // _mros_target = 0.0f;
+    C620_SetTarget(&c620_dev_info_global[1], _mros_target);
 
-    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
-        if(p_actuator_msg->device.device_num != 2)return;
-        _mros_target = (float)p_actuator_msg->target_value - 325.0f;
-        _mros_target = clip_f(_mros_target, 0.0f, 650.0f);  // TODO
-//        _mros_target = 0.0f;
-        C620_SetTarget(&c620_dev_info_global[1], _mros_target);
-    }
+//    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
+//    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
+//        if(p_actuator_msg->device.device_num != 2)return;
+//        _mros_target = (float)p_actuator_msg->target_value - 325.0f;
+//        _mros_target = clip_f(_mros_target, 0.0f, 650.0f);
+////        _mros_target = 0.0f;
+//        C620_SetTarget(&c620_dev_info_global[1], _mros_target);
+//    }
 }
 
 void subscription_callback_theta(const void * msgin) {
-    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
-    float _mros_target;
+    const std_msgs__msg__Float32 *p_target_value = (const std_msgs__msg__Float32 *)msgin;
+    static float _mros_target;
+    _mros_target = p_target_value->data;
+    // _mros_target = 0.0f;
+    C620_SetTarget(&c620_dev_info_global[0], _mros_target);
 
-    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
-        if(p_actuator_msg->device.device_num != 1)return;
-        _mros_target = (float)p_actuator_msg->target_value;
-//        _mros_target = 0.0f;
-        C620_SetTarget(&c620_dev_info_global[0], _mros_target);
-    }
+//    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
+//    float _mros_target;
+//
+//    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
+//        if(p_actuator_msg->device.device_num != 1)return;
+//        _mros_target = (float)p_actuator_msg->target_value;
+////        _mros_target = 0.0f;
+//        C620_SetTarget(&c620_dev_info_global[0], _mros_target);
+//    }
 }
 
 
@@ -340,7 +351,7 @@ void StartMrosTask(void *argument)
             cubemx_transport_write,
             cubemx_transport_read);
 
-    // TODO: micro-ROS connection check
+    // micro-ROS connection check
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);  // LD3 (RED) -> ON
     while(1) {
         rmw_ret_t ping_result = rmw_uros_ping_agent(1000, 5);  // ping Agent
@@ -374,22 +385,22 @@ void StartMrosTask(void *argument)
 
     // create executor
     rclc_executor_t executor;
-    unsigned int num_handlers = 7; // TODO : 忘れずに変更
+    unsigned int num_handlers = 6; // TODO : 忘れずに変更
     RCCHECK(rclc_executor_init(&executor, &support.context, num_handlers, &allocator));
 
 
     // create subscriber for r
     rcl_subscription_t subscriber_r;
     const char* sub_name_r = "mros_input_r";
-    actuator_msgs__msg__ActuatorMsg actuator_msg_r;
-    RCCHECK(rclc_subscription_init_default(&subscriber_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_r));
+    std_msgs__msg__Float32 actuator_msg_r;
+    RCCHECK(rclc_subscription_init_default(&subscriber_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), sub_name_r));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_r, &actuator_msg_r, &subscription_callback_r, ON_NEW_DATA));
 
     // create subscriber for theta
     rcl_subscription_t subscriber_theta;
     const char* sub_name_theta = "mros_input_theta";
-    actuator_msgs__msg__ActuatorMsg actuator_msg_theta;
-    RCCHECK(rclc_subscription_init_default(&subscriber_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMsg), sub_name_theta));
+    std_msgs__msg__Float32 actuator_msg_theta;
+    RCCHECK(rclc_subscription_init_default(&subscriber_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), sub_name_theta));
     RCCHECK(rclc_executor_add_subscription(&executor, &subscriber_theta, &actuator_msg_theta, &subscription_callback_theta, ON_NEW_DATA));
 
     // create subscriber for can modules
@@ -426,7 +437,15 @@ void StartMrosTask(void *argument)
     RCCHECK(rclc_timer_init_default(&timer_c620_theta, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620_theta));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_theta));
 
-
+//    rmw_ret_t state;
+//    while(1){
+//        state = rmw_uros_ping_agent(100, 1);
+//        if(state == RMW_RET_OK){
+//            rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+//        }else{
+//            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);  // LD3 (RED) -> ON
+//        }
+//    }
     rclc_executor_spin(&executor);
 
 
@@ -435,7 +454,7 @@ void StartMrosTask(void *argument)
     RCCHECK(rcl_subscription_fini(&subscriber, &node));
     RCCHECK(rcl_subscription_fini(&subscriber_r, &node));
     RCCHECK(rcl_subscription_fini(&subscriber_theta, &node));
-//    RCCHECK(rcl_publisher_fini(&publisher_mcmd, &node))
+    RCCHECK(rcl_publisher_fini(&publisher_mcmd, &node))
     RCCHECK(rcl_publisher_fini(&publisher_c620_theta, &node))
     RCCHECK(rcl_publisher_fini(&publisher_c620_r, &node))
     RCCHECK(rcl_timer_fini(&timer_c620_r));
