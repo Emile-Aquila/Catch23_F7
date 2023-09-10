@@ -40,8 +40,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DISABLE_CAN_WAIT_CONNECT 1
-#define DISABLE_C620_WAIT_CONNECT 1
+#define DISABLE_CAN_WAIT_CONNECT 0
+#define DISABLE_C620_WAIT_CONNECT 0
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -234,7 +234,8 @@ int main(void)
     // c620 (theta)
     c620_dev_info_global[0].device_id = 1;  // 1スタートな事に注意
     c620_dev_info_global[0].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
-    c620_dev_info_global[0].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
+//    c620_dev_info_global[0].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_CALIB;
+    c620_dev_info_global[0].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_INTERNAL;
     c620_dev_info_global[0].ctrl_param.ctrl_type = C620_CTRL_POS;
     c620_dev_info_global[0].ctrl_param.accel_limit_size = 15.0f;
 //    c620_dev_info_global[0].ctrl_param.accel_limit_size = 5.0f;
@@ -255,7 +256,7 @@ int main(void)
     // c620 (r)
     c620_dev_info_global[1].device_id = 2;
     c620_dev_info_global[1].ctrl_param.accel_limit = C620_ACCEL_LIMIT_ENABLE;
-    c620_dev_info_global[1].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_ENABLE;
+    c620_dev_info_global[1].ctrl_param.use_internal_offset = C620_USE_OFFSET_POS_INTERNAL;
     c620_dev_info_global[1].ctrl_param.ctrl_type = C620_CTRL_POS;
     c620_dev_info_global[1].ctrl_param.accel_limit_size = 1500.0f;
 //    c620_dev_info_global[1].ctrl_param.accel_limit_size = 800.0f;
@@ -276,6 +277,10 @@ int main(void)
 
     for(int i=0; i<num_of_c620; i++)C620_SetTarget(&c620_dev_info_global[i], 0.0f);
     if(!DISABLE_C620_WAIT_CONNECT)C620_WaitForConnect(c620_dev_info_global, num_of_c620);
+//    for(int i=0; i<num_of_c620; i++){
+//        C620_Calibration(&c620_dev_info_global[i], -2.0f, SWITCH_NO, GPIOG, GPIO_PIN_1, &hcan1);
+//        C620_ControlEnable(&(c620_dev_info_global[i]));
+//    }
     for(int i=0; i<num_of_c620; i++)C620_ControlEnable(&(c620_dev_info_global[i]));
 
 
