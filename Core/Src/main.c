@@ -159,8 +159,9 @@ int main(void)
     printf("Start Initializing CAN System:Begin\n\r");
 
     num_of_devices.mcmd3 = NUM_OF_MCMD3;
-    num_of_devices.mcmd4 = NUM_OF_MCMD4;
-    num_of_devices.air = 1;
+    num_of_devices.mcmd4 = 0;
+//    num_of_devices.mcmd4 = NUM_OF_MCMD4;  // TODO: こっちが正しい
+    num_of_devices.air = 1;  // TODO: 2にする
 
     CAN_SystemInit(&hcan2); // F7のCAN通信のinit
     printf("Start Initializing CAN System:End\n\r");
@@ -170,6 +171,7 @@ int main(void)
 
     // mcmd[0] -> z
     if(NUM_OF_MCMD3 != 0) {
+        // Z軸
         mcmd_handlers[0].device.node_type = NODE_MCMD3;
         mcmd_handlers[0].device.node_id = 1;
         mcmd_handlers[0].device.device_num = 0;
@@ -195,19 +197,51 @@ int main(void)
         MCMD_Control_Enable(&mcmd_handlers[0]);  // 制御開始
     }
 
+    if(NUM_OF_MCMD4 != 0 && 0){
+        // 整列機構用
+        mcmd_handlers[1].device.node_type = NODE_MCMD4;
+        mcmd_handlers[1].device.node_id = 2;
+        mcmd_handlers[1].device.device_num = 0;
+        mcmd_handlers[1].ctrl_param.ctrl_type = MCMD_CTRL_POS;
+        mcmd_handlers[1].ctrl_param.feedback = MCMD_FB_ENABLE;
+        mcmd_handlers[1].fb_type = MCMD_FB_POS;
+        mcmd_handlers[1].limit_sw_type = LIMIT_SW_NO;  // TODO: 確認
+        mcmd_handlers[1].enc_dir = MCMD_DIR_BC;  // TODO: 確認 (多分ok)
+        mcmd_handlers[1].rot_dir = MCMD_DIR_FW;  // TODO: 確認 (多分ok)
+        mcmd_handlers[1].calib = CALIBRATION_ENABLE;
+        mcmd_handlers[1].ctrl_param.gravity_compensation = GRAVITY_COMPENSATION_DISABLE;
+        mcmd_handlers[1].calib_duty = -0.1f;  // TODO: 調整
+        mcmd_handlers[1].quant_per_unit = 155.0f / 1024.0f;
+        mcmd_handlers[1].ctrl_param.accel_limit = ACCEL_LIMIT_ENABLE;
+        mcmd_handlers[1].ctrl_param.accel_limit_size = 5.0f;
+        mcmd_handlers[1].ctrl_param.PID_param.kp = 0.12f;
+
+        MCMD_init(&mcmd_handlers[1]);
+        MCMD_Calib(&mcmd_handlers[1]);  // キャリブレーションを行う
+        HAL_Delay(1500);
+        MCMD_SetTarget(&mcmd_handlers[1], 50.0f);  // 目標値(0.0)を設定
+        // TODO: 稼働限界は226mm
+        MCMD_Control_Enable(&mcmd_handlers[1]);  // 制御開始
+    }
+
     // air cylinder
     if(NUM_OF_AIR != 0) {
         air_devices[0].node_type = NODE_AIR;
         air_devices[0].node_id = 0;
-        air_devices[0].device_num = 0;
+        air_devices[0].device_num = PORT_1;
 
         air_devices[1].node_type = NODE_AIR;
         air_devices[1].node_id = 0;
-        air_devices[1].device_num = 1;
+        air_devices[1].device_num = PORT_2;
 
         air_devices[2].node_type = NODE_AIR;
         air_devices[2].node_id = 0;
-        air_devices[2].device_num = 2;
+        air_devices[2].device_num = PORT_3;
+
+        // 一個取りハンド
+        air_devices[3].node_type = NODE_AIR;
+        air_devices[3].node_id = 1;
+        air_devices[3].device_num = PORT_1;
 
         for (uint8_t j = 0; j < 1; j++) {
             for (uint8_t i = 0; i <= (uint8_t) PORT_8; i++) {
@@ -216,6 +250,7 @@ int main(void)
             }
         }
         air_devices[0].device_num = PORT_1;
+        air_devices[3].device_num = PORT_1;
         AirCylinder_SendOutput(&air_devices[0], AIR_ON);
         AirCylinder_SendOutput(&air_devices[1], AIR_ON);
         AirCylinder_SendOutput(&air_devices[2], AIR_ON);
@@ -248,7 +283,8 @@ int main(void)
     c620_dev_info_global[0].ctrl_param.pid_vel.kff = 0.0f;
 
     c620_dev_info_global[0].ctrl_param.pid.kp = 10.0f;  // 位置制御用
-    c620_dev_info_global[0].ctrl_param.pid.ki = 0.2f;
+//    c620_dev_info_global[0].ctrl_param.pid.ki = 0.2f;
+    c620_dev_info_global[0].ctrl_param.pid.ki = 0.0f;
     c620_dev_info_global[0].ctrl_param.pid.kd = 0.0f;
     c620_dev_info_global[0].ctrl_param.pid.kff = 0.0f;
 

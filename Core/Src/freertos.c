@@ -191,7 +191,7 @@ void pub_timer_callback_c620_r(rcl_timer_t * timer, int64_t last_call_time){
         fb.velocity = fb_data.velocity;
         fb.current = fb_data.current;
         fb.position = fb_data.position + 325.0f;
-        fb.position = fb_data.position;
+//        fb.position = fb_data.position;
         fb.target_value = c620_dev_info_global[1].ctrl_param._target_value + 325.0f;
         RCSOFTCHECK(rcl_publish(&publisher_c620_r, &fb, NULL));
     }
@@ -240,18 +240,8 @@ void subscription_callback_r(const void * msgin) {
     const std_msgs__msg__Float32 *p_target_value = (const std_msgs__msg__Float32 *)msgin;
     static float _mros_target;
     _mros_target = p_target_value->data - 325.0f;
-//    _mros_target = clip_f(_mros_target, 0.0f, 650.0f);
     // _mros_target = 0.0f;
     C620_SetTarget(&c620_dev_info_global[1], _mros_target);
-
-//    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
-//    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
-//        if(p_actuator_msg->device.device_num != 2)return;
-//        _mros_target = (float)p_actuator_msg->target_value - 325.0f;
-//        _mros_target = clip_f(_mros_target, 0.0f, 650.0f);
-////        _mros_target = 0.0f;
-//        C620_SetTarget(&c620_dev_info_global[1], _mros_target);
-//    }
 }
 
 void subscription_callback_theta(const void * msgin) {
@@ -260,16 +250,6 @@ void subscription_callback_theta(const void * msgin) {
     _mros_target = p_target_value->data;
     // _mros_target = 0.0f;
     C620_SetTarget(&c620_dev_info_global[0], _mros_target);
-
-//    const actuator_msgs__msg__ActuatorMsg *p_actuator_msg = (const actuator_msgs__msg__ActuatorMsg *) msgin;
-//    float _mros_target;
-//
-//    if(p_actuator_msg->device.node_type.node_type == actuator_msgs__msg__NodeType__NODE_C620){
-//        if(p_actuator_msg->device.device_num != 1)return;
-//        _mros_target = (float)p_actuator_msg->target_value;
-////        _mros_target = 0.0f;
-//        C620_SetTarget(&c620_dev_info_global[0], _mros_target);
-//    }
 }
 
 
@@ -417,13 +397,6 @@ void StartMrosTask(void *argument)
     rcl_timer_t timer_mcmd;
     RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(40), pub_timer_callback_mcmd));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
-
-    // publisher for c620
-//    const char* topic_name_pub_c620 = "mros_output_c620";
-//    RCCHECK(rclc_publisher_init_default(&publisher_c620, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorMultipleFeedback), topic_name_pub_c620));
-//    rcl_timer_t timer_c620;
-//    RCCHECK(rclc_timer_init_default(&timer_c620, &support, RCL_MS_TO_NS(40), pub_timer_callback_c620));
-//    RCCHECK(rclc_executor_add_timer(&executor, &timer_c620));
 
     // publisher for c620 r
     RCCHECK(rclc_publisher_init_default(&publisher_c620_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, C620Feedback), "c620_r"));
