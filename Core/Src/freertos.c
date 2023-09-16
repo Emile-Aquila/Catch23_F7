@@ -395,19 +395,19 @@ void StartMrosTask(void *argument)
     const char* topic_name_pub_mcmd = "mros_output_mcmd";
     RCCHECK(rclc_publisher_init_default(&publisher_mcmd, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, ActuatorFeedback), topic_name_pub_mcmd));
     rcl_timer_t timer_mcmd;
-    RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(40), pub_timer_callback_mcmd));
+    RCCHECK(rclc_timer_init_default(&timer_mcmd, &support, RCL_MS_TO_NS(45), pub_timer_callback_mcmd));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_mcmd));
 
     // publisher for c620 r
     RCCHECK(rclc_publisher_init_default(&publisher_c620_r, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, C620Feedback), "c620_r"));
     rcl_timer_t timer_c620_r;
-    RCCHECK(rclc_timer_init_default(&timer_c620_r, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620_r));
+    RCCHECK(rclc_timer_init_default(&timer_c620_r, &support, RCL_MS_TO_NS(33), pub_timer_callback_c620_r));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_r));
 
     // publisher for c620 theta
     RCCHECK(rclc_publisher_init_default(&publisher_c620_theta, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(actuator_msgs, msg, C620Feedback), "c620_theta"));
     rcl_timer_t timer_c620_theta;
-    RCCHECK(rclc_timer_init_default(&timer_c620_theta, &support, RCL_MS_TO_NS(25), pub_timer_callback_c620_theta));
+    RCCHECK(rclc_timer_init_default(&timer_c620_theta, &support, RCL_MS_TO_NS(33), pub_timer_callback_c620_theta));
     RCCHECK(rclc_executor_add_timer(&executor, &timer_c620_theta));
 
 //    rmw_ret_t state;
